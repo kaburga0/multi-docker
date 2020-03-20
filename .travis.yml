@@ -1,0 +1,23 @@
+language: generic
+
+sudo: required
+services:
+  - docker-compose
+
+before_install:
+  - docker build -t kaburga/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true kaburga/react-test npm test
+
+after_success:
+  - docker build -t kaburga/multi-client ./client
+  - docker build -t kaburga/multi-nginx ./nginx
+  - docker build -t kaburga/multi-server ./server
+  - docker build -t kaburga/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push kaburga/multi-client
+  - docker push kaburga/multi-nginx
+  - docker push kaburga/multi-server
+  - docker push kaburga/multi-worker
